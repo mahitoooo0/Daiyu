@@ -348,6 +348,9 @@ private fun LinuxInstallAction(state: LinuxInstallState?, page: LinuxSettingsPag
             onClick = { if (ownerCurrent()) page.approveInstalled(state.registration) })
         state.receipt?.directorySyncConfirmed == true -> TextButton("继续设置", enabled = ready, onClick = { if (ownerCurrent()) page.prepareInstalledRegistration(mode) })
         state.receipt != null && prepared != null -> TextButton("完成安装", enabled = ready, onClick = { if (ownerCurrent()) page.confirmPublishedDurability(prepared) })
+        // A prepared-but-never-started request had no action at all: the install button is hidden while
+        // prepared != null, so a frozen/aborted preparation left the page with no way to continue.
+        prepared != null -> TextButton("继续安装", enabled = ready, onClick = { if (ownerCurrent()) page.install(prepared) })
         else -> Unit
     }
     state?.notice?.takeIf {
