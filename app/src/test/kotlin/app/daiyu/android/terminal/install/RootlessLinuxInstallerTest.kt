@@ -116,8 +116,8 @@ class RootlessLinuxInstallerTest : TestCase() {
         assertFalse(f.privateRoot.exists()); assertEquals(0, f.requests)
     }
 
-    fun testCatalogPreparationCoversBothDistributionsAbisAndExecutionModes() = fixture { f ->
-        assertEquals(4, LinuxRootfsCatalog.artifacts.size)
+    fun testCatalogPreparationCoversAllDistributionsAbisAndExecutionModes() = fixture { f ->
+        assertEquals(6, LinuxRootfsCatalog.artifacts.size)
         var preparedCount = 0
         for (artifact in LinuxRootfsCatalog.artifacts) for (mode in LinuxExecutionMode.entries) {
             val configuration = if (mode == LinuxExecutionMode.PROOT) {

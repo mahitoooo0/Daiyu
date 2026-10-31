@@ -333,6 +333,23 @@ class LinuxSettingsScreenTest : WiredActivityTestCase() {
         assertEquals(0, writes.get())
         assertEquals(0, fixture.opens.get())
     }
+    fun testUbuntuChoiceIsOfferedAndPersistsWithoutInstallingOrOpeningAnything() {
+        show()
+        node("linux-distribution-choice").performClick()
+        node("linux-choice:linux-distribution-choice:2").assertExists().performClick()
+        dismissChoice()
+        node("linux-distribution-choice").assertTextContains("Ubuntu")
+        assertEquals(LinuxInstallChoice("ubuntu", LinuxExecutionMode.PROOT),
+            LinuxInstallChoicePreferences(choicePreferences).read())
+        // The pinned catalog order is the only source of the selector: both Alpine and Debian stay reachable.
+        node("linux-distribution-choice").performClick()
+        node("linux-choice:linux-distribution-choice:0").assertExists().performClick()
+        dismissChoice()
+        node("linux-distribution-choice").assertTextContains("Alpine")
+        assertEquals(0, writes.get())
+        assertEquals(0, fixture.opens.get())
+    }
+
     fun testInstallChoicesPersistAcrossNewPageAndPreferenceInstancesWithoutInstalling() {
         setRunningMode(RunningMode.ROOT)
         show()

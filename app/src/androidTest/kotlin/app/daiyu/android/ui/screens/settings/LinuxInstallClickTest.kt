@@ -203,7 +203,7 @@ class LinuxInstallClickTest : WiredActivityTestCase() {
     }
 
     fun testOneClickInstallsAndEnablesAllDistributionsAndModesWithoutASecondConfirmation() {
-        for (distribution in listOf("alpine", "debian")) for (mode in LinuxExecutionMode.entries) {
+        for (distribution in LinuxRootfsCatalog.distributions) for (mode in LinuxExecutionMode.entries) {
             val before = transactions.installs
             val approvalsBefore = approvals
             val selectionsBefore = selections

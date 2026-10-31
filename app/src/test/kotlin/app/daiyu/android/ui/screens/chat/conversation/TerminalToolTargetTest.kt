@@ -13,6 +13,7 @@ class TerminalToolTargetTest {
         val cases = mapOf(
             """{"backend":"linux:debian","uid":0,"guest_uid":0,"host_root":true}""" to "Debian • root",
             """{"backend":"linux:alpine","uid":1000,"guest_uid":1000,"host_root":false}""" to "Alpine • user",
+            """{"backend":"linux:ubuntu","uid":0,"guest_uid":0,"host_root":true}""" to "Ubuntu • root",
             """{"backend":"android","uid":0,"root":true,"host_root":true}""" to "Android • root",
             """{"backend":"android","uid":10444,"root":false,"host_root":false}""" to "Android • user",
             """{"backend":"shizuku","uid":2000}""" to "Android • Shizuku",

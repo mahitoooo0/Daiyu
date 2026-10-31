@@ -15,9 +15,9 @@ The supplied source research identifies the authorized input root:
 with baseline `2a7e7ab92b98da5a3711611017021441e7a8053c`, specifically
 `app/src/main/kotlin/[historical-package-omitted]/agent/terminal/AlpineEnvironmentInstaller.kt`,
 `DebianEnvironmentInstaller.kt`, `RootlessLinuxInstaller.kt` and `VerifiedArtifactDownloader.kt`.
-The four metadata entries below are the fixed values supplied from that source research, not
-newly discovered downloads. The extractor is independently implemented against the supplied
-algorithm/security contract; no claim is made that the original full source was re-read by
+The six metadata entries below are the fixed values supplied from that source research plus the
+Ubuntu entries added later, not newly discovered downloads. The extractor is independently
+implemented against the supplied algorithm/security contract; no claim is made that the original full source was re-read by
 this editing agent. The user has authorized migration/modification/distribution of the supplied
 backend; original PolyForm notices and independent library licenses remain applicable (see
 [installer notice](../THIRD_PARTY/linux-installer/NOTICE.md)). No old installBase, environment
@@ -29,6 +29,8 @@ registry, auto-mirror logic, root shell, profiles or host identity/runtime were 
 | Alpine 3.24.1 | x86_64 / x86_64 | 3698422 | `41f73e3cf5fa919b8aa5ca6b30dc48f0da2720776d7423e2a7748211456fe081` | 0 |
 | Debian 13, Termux proot-distro v4.29.0 | arm64-v8a / aarch64 | 35409704 | `3834a11cbc6496935760bdc20cca7e2c25724d0cd8f5e4926da8fd5ca1857918` | 1 |
 | Debian 13, Termux proot-distro v4.29.0 | x86_64 / x86_64 | 36728936 | `4b8f33b80a10d734ff935e5934588572f860c0c38a68bf91db59af0580370716` | 1 |
+| Ubuntu 24.04.5 (official Ubuntu Base) | arm64-v8a / arm64 | 29936675 | `a91d5a93010193712d346d761372b7c9db6dfcf093893161c64ca107f05914f2` | 0 |
+| Ubuntu 24.04.5 (official Ubuntu Base) | x86_64 / amd64 | 30028293 | `e77b6f10c2590cef872b33ee9f635a0e3fd1f57fb074c0e52b5c7f56147a0c86` | 0 |
 
 For architecture `<arch>`, Alpine filenames are
 `alpine-minirootfs-3.24.1-<arch>.tar.gz` under
@@ -38,6 +40,14 @@ Debian filenames are `debian-trixie-<arch>-pd-v4.29.0.tar.xz` under
 `https://github.com/termux/proot-distro/releases/download/v4.29.0/`, with explicitly selectable
 mirror formed by prefixing the complete primary URL with `https://gh-proxy.com/`.
 These Debian artifacts are **Termux proot-distro release artifacts, not official Debian rootfs**.
+Ubuntu filenames are `ubuntu-base-24.04.5-base-<arch>.tar.gz` under
+`https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.5/release/`, with explicitly selectable
+`https://mirrors.aliyun.com/ubuntu-cdimage/ubuntu-base/releases/24.04.5/release/` mirror; these are
+official Ubuntu Base release archives (gzip, archive top level is the root, strip 0), not
+proot-distro repacks. The Ubuntu base image ships an empty `/etc/resolv.conf` (as the Debian
+proot-distro image ships a stub one), and this runtime binds only `/dev`, so guest package
+management needs a working `/etc/resolv.conf` supplied inside the guest; installation itself makes
+no such change.
 There is no 32-bit entry or architecture fallback. Selection performs no network requests.
 The existing no-redirect policy is unchanged, including for GitHub: if an approved URL redirects,
 installation fails closed; these pinned URLs are not proof of present download availability.
@@ -50,7 +60,9 @@ parent, not from invented installer constants.
 
 ## Parent integration contract
 
-1. Select one of the four entries from `LinuxRootfsCatalog` and one of its explicit mirrors.
+1. Select one of the six entries from `LinuxRootfsCatalog` (and its ordered, de-duplicated
+   `distributions` list, which the settings selector and saved install-choice validator derive
+   from) and one of its explicit mirrors.
    It is only transport metadata, **not** a second installed-environment registry.
 2. Use `RootlessLinuxInstaller.forApp(context, parentRunner)`.
    It fixes the production base to `File(context.filesDir, "linux-installations")`. There is no
@@ -166,8 +178,8 @@ incorrect declared length, no-clobber destination, pre-cancel (zero connection c
 closing/disconnecting a blocked **fake** stream. Tests never perform network installation,
 run a shell, invoke PRoot, or download a real rootfs.
 
-New, **not yet run** tests: `LinuxRootfsCatalogTest` asserts all four metadata records, immutable
-lists, no 32-bit fallback and fixed maximum quotas; `TarLinuxRootfsExtractionTest` uses tiny real
+New, **not yet run** tests: `LinuxRootfsCatalogTest` asserts all six metadata records, the ordered distribution
+list, immutable lists, no 32-bit fallback and fixed maximum quotas; `TarLinuxRootfsExtractionTest` uses tiny real
 tar/gzip/xz fixtures for extraction, executable permissions, stripped layouts, forward hardlink
 chains, guest-absolute links, malicious paths/duplicates/NUL, staging checks, link ancestors,
 escapes, cycles/missing sources, devices/FIFO, privileged mode stripping, byte/entry/metadata

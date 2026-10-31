@@ -2,6 +2,7 @@ package app.daiyu.android.ui.screens.settings
 
 import android.content.SharedPreferences
 import app.daiyu.android.terminal.LinuxExecutionMode
+import app.daiyu.android.terminal.install.LinuxRootfsCatalog
 
 internal data class LinuxInstallChoice(val distribution: String, val executionMode: LinuxExecutionMode)
 
@@ -26,6 +27,7 @@ internal class LinuxInstallChoicePreferences(private val preferences: SharedPref
 
     private companion object {
         const val KEY = "install_choice"
-        val DISTRIBUTIONS = setOf("alpine", "debian")
+        /** Derived from the pinned rootfs catalog so a new distribution cannot be silently unsavable. */
+        val DISTRIBUTIONS = LinuxRootfsCatalog.distributions.toSet()
     }
 }

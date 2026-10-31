@@ -163,9 +163,9 @@ class VerifiedArtifactDownloaderTest : TestCase() {
         }
     }
 
-    fun testBothDistributionsAbisAndAllSelectedMirrorsUseTheSameVerifiedDownloader() = fixture { destination ->
-        assertEquals(4, LinuxRootfsCatalog.artifacts.size)
-        assertEquals(8, LinuxRootfsCatalog.artifacts.sumOf { it.mirrors.size })
+    fun testAllDistributionAbisAndSelectedMirrorsUseTheSameVerifiedDownloader() = fixture { destination ->
+        assertEquals(6, LinuxRootfsCatalog.artifacts.size)
+        assertEquals(12, LinuxRootfsCatalog.artifacts.sumOf { it.mirrors.size })
         for (catalog in LinuxRootfsCatalog.artifacts) for (selected in catalog.mirrors) {
             val pinned = LinuxRootfsArtifact("fixture", catalog.distribution, catalog.version, catalog.abi,
                 catalog.archive, payload.size.toLong(), artifact().sha256, listOf(selected))

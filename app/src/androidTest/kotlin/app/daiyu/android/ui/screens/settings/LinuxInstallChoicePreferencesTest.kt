@@ -2,6 +2,7 @@ package app.daiyu.android.ui.screens.settings
 
 import android.test.InstrumentationTestCase
 import app.daiyu.android.terminal.LinuxExecutionMode
+import app.daiyu.android.terminal.install.LinuxRootfsCatalog
 
 class LinuxInstallChoicePreferencesTest : InstrumentationTestCase() {
     private val name = "linux-install-choice-test-${java.util.UUID.randomUUID()}"
@@ -9,7 +10,7 @@ class LinuxInstallChoicePreferencesTest : InstrumentationTestCase() {
 
     fun testAllPairsRoundTripAcrossNewStoreInstances() {
         assertNull(LinuxInstallChoicePreferences(preferences).read())
-        for (distribution in listOf("alpine", "debian")) for (mode in LinuxExecutionMode.entries) {
+        for (distribution in LinuxRootfsCatalog.distributions) for (mode in LinuxExecutionMode.entries) {
             val choice = LinuxInstallChoice(distribution, mode)
             assertTrue(LinuxInstallChoicePreferences(preferences).save(choice))
             assertEquals(choice, LinuxInstallChoicePreferences(preferences).read())
@@ -17,7 +18,7 @@ class LinuxInstallChoicePreferencesTest : InstrumentationTestCase() {
     }
 
     fun testMalformedPreferenceDoesNotBecomeRuntimeSelectionOrWriteOnRead() {
-        for (raw in listOf("", "ubuntu:PROOT", "debian:ROOT", "debian:CHROOT:extra", "alpine")) {
+        for (raw in listOf("", "fedora:PROOT", "debian:ROOT", "debian:CHROOT:extra", "alpine")) {
             assertTrue(preferences.edit().putString("install_choice", raw).commit())
             assertNull(LinuxInstallChoicePreferences(preferences).read())
             assertEquals(raw, preferences.getString("install_choice", null))
@@ -46,7 +47,7 @@ class LinuxInstallChoicePreferencesTest : InstrumentationTestCase() {
         val saved = LinuxInstallChoice("debian", LinuxExecutionMode.CHROOT)
         val store = LinuxInstallChoicePreferences(preferences)
         assertTrue(store.save(saved))
-        assertFalse(store.save(LinuxInstallChoice("ubuntu", LinuxExecutionMode.PROOT)))
+        assertFalse(store.save(LinuxInstallChoice("fedora", LinuxExecutionMode.PROOT)))
         assertEquals(saved, LinuxInstallChoicePreferences(preferences).read())
     }
 

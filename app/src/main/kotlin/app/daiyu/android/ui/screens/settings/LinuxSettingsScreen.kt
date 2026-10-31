@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import app.daiyu.android.runningmode.*
 import app.daiyu.android.terminal.*
 import app.daiyu.android.terminal.install.LinuxInstallState
+import app.daiyu.android.terminal.install.LinuxRootfsCatalog
 import app.daiyu.android.terminal.install.PreparedLinuxInstall
 import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 import app.daiyu.android.ui.components.OptionSelectionSheet
@@ -182,11 +183,12 @@ internal fun LinuxSettingsScreen(controller: LinuxSettingsController, page: Linu
                 item("linux-configuration") {
                     SettingsSectionTitle("环境配置")
                     SettingsCard(Modifier.testTag("linux-environment-configuration")) {
+                        val distributionChoices = LinuxRootfsCatalog.distributions
                         LinuxChoiceRow("Linux 发行版", distributionName(distribution), "linux-distribution-choice", choiceEnabled,
-                            choices = listOf("Alpine", "Debian"),
-                            selectedIndex = if (distribution.equals("debian", true)) 1 else 0,
+                            choices = distributionChoices.map { distributionName(it) },
+                            selectedIndex = distributionChoices.indexOfFirst { it.equals(distribution, true) }.coerceAtLeast(0),
                             popupScope = remember(page, runningMode, renderedTabScope) { Any() }, ownerCurrent = ::choiceCurrent,
-                            onSelect = { choose(if (it == 0) "alpine" else "debian", mode) })
+                            onSelect = { index -> distributionChoices.getOrNull(index)?.let { choose(it, mode) } })
                         LinuxChoiceRow("运行方式", modeName(mode), "linux-execution-choice", choiceEnabled,
                             choices = listOf("普通模式 · PRoot") +
                                 if (rootMode) listOf("Root 模式 · chroot") else emptyList(),
@@ -292,7 +294,9 @@ internal fun LinuxSettingsScreen(controller: LinuxSettingsController, page: Linu
     }
 }
 
-private fun distributionName(value: String) = when (value.lowercase()) { "alpine" -> "Alpine"; "debian" -> "Debian"; else -> value }
+private fun distributionName(value: String) = when (value.lowercase()) {
+    "alpine" -> "Alpine"; "debian" -> "Debian"; "ubuntu" -> "Ubuntu"; else -> value
+}
 private fun modeName(mode: LinuxExecutionMode) = if (mode == LinuxExecutionMode.CHROOT) "Root 模式 · chroot" else "普通模式 · PRoot"
 
 @Composable

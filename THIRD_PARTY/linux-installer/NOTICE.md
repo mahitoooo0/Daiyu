@@ -32,7 +32,9 @@ and research provenance are not a claim that dependency tests or release complia
 ## Rootfs and native-helper scope
 
 Alpine 3.24.1 rootfs entries use the supplied Alpine release URLs; Debian 13 entries are
-**Termux proot-distro v4.29.0 release artifacts**, not official Debian rootfs artifacts.
+**Termux proot-distro v4.29.0 release artifacts**, not official Debian rootfs artifacts; Ubuntu
+24.04.5 entries are **official Ubuntu Base release artifacts** from `cdimage.ubuntu.com` (Alibaba
+Cloud mirror selectable), not proot-distro repacks.
 Archive SHA-256/size values identify the fixed inputs but do not override licenses of packages
 inside them. No rootfs is vendored by this change and no automatic download occurs.
 

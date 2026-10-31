@@ -1,5 +1,6 @@
 package app.daiyu.android.ui.screens.chat.conversation
 
+import app.daiyu.android.terminal.install.LinuxRootfsCatalog
 import java.util.Locale
 import org.json.JSONObject
 
@@ -39,8 +40,11 @@ internal data class TerminalToolTarget(val environment: String, val identity: St
                 }
                 return TerminalToolTarget("Android", identity)
             }
-            if (backend in setOf("linux:debian", "linux:alpine")) {
-                val environment = if (backend == "linux:debian") "Debian" else "Alpine"
+            // Only catalog-pinned distributions are named; an arbitrary linux:<label> stays unknown.
+            val distribution = backend?.takeIf { it.startsWith("linux:") }?.removePrefix("linux:")
+                ?.takeIf { it in LinuxRootfsCatalog.distributions }
+            if (distribution != null) {
+                val environment = distribution.replaceFirstChar { it.uppercaseChar() }
                 val guestUid = if (receipt.has("guest_uid") && !receipt.isNull("guest_uid")) readUid("guest_uid") else uid
                 val conflictingUid = receipt.has("uid") && !receipt.isNull("uid") && (uid == null || guestUid != uid)
                 val identity = when { guestUid == null || conflictingUid -> unknown; guestUid == 0L -> "root"; else -> "user" }

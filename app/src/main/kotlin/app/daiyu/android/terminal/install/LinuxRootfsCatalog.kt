@@ -8,6 +8,7 @@ import java.util.Collections
  * Maintainer-owned rootfs catalog; historical input baseline 2a7e7ab92b98da5a3711611017021441e7a8053c
  * (AlpineEnvironmentInstaller / DebianEnvironmentInstaller). No network verification implied.
  * Debian payloads are Termux proot-distro releases, NOT official Debian rootfs artifacts.
+ * Ubuntu payloads are official Ubuntu Base release artifacts, NOT proot-distro repacks.
  */
 object LinuxRootfsCatalog {
     val artifacts: List<LinuxRootfsArtifact> = Collections.unmodifiableList(listOf(
@@ -18,8 +19,19 @@ object LinuxRootfsCatalog {
         debian("arm64-v8a", "aarch64", 35409704,
             "3834a11cbc6496935760bdc20cca7e2c25724d0cd8f5e4926da8fd5ca1857918"),
         debian("x86_64", "x86_64", 36728936,
-            "4b8f33b80a10d734ff935e5934588572f860c0c38a68bf91db59af0580370716")
+            "4b8f33b80a10d734ff935e5934588572f860c0c38a68bf91db59af0580370716"),
+        ubuntu("arm64-v8a", "arm64", 29936675,
+            "a91d5a93010193712d346d761372b7c9db6dfcf093893161c64ca107f05914f2"),
+        ubuntu("x86_64", "amd64", 30028293,
+            "e77b6f10c2590cef872b33ee9f635a0e3fd1f57fb074c0e52b5c7f56147a0c86")
     ))
+
+    /**
+     * Ordered, de-duplicated distributions present in [artifacts]; the settings selector and the
+     * saved install-choice validator derive from this instead of keeping their own lists.
+     */
+    val distributions: List<String> =
+        Collections.unmodifiableList(artifacts.map { it.distribution }.distinct())
 
     fun find(distribution: String, abi: String): LinuxRootfsArtifact? =
         artifacts.singleOrNull { it.distribution == distribution && it.abi == abi }
@@ -41,5 +53,17 @@ object LinuxRootfsCatalog {
                 RootfsMirror("primary", URI(url)),
                 RootfsMirror("gh-proxy", URI("https://gh-proxy.com/$url"))
             ), stripComponents = 1)
+    }
+
+    /** Official Ubuntu Base rootfs: gzip, archive top level is the root itself (strip 0). */
+    private fun ubuntu(abi: String, arch: String, bytes: Long, hash: String): LinuxRootfsArtifact {
+        val version = "24.04.5"
+        val file = "ubuntu-base-$version-base-$arch.tar.gz"
+        val path = "ubuntu-base/releases/$version/release/$file"
+        return LinuxRootfsArtifact("ubuntu-$version-$arch", "ubuntu", version, abi,
+            RootfsArchive.TAR_GZIP, bytes, hash, listOf(
+                RootfsMirror("primary", URI("https://cdimage.ubuntu.com/$path")),
+                RootfsMirror("aliyun", URI("https://mirrors.aliyun.com/ubuntu-cdimage/$path"))
+            ), stripComponents = 0)
     }
 }
