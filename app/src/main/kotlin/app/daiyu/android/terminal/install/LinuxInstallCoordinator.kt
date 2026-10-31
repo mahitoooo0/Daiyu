@@ -79,6 +79,8 @@ class LinuxInstallCoordinator internal constructor(
     unavailableReason: String? = null,
     val executionMode: LinuxExecutionMode = LinuxExecutionMode.PROOT,
     private val chrootAbi: () -> String = { LinuxRuntimePlatform.requireSupported(LinuxExecutionMode.CHROOT) },
+    /** Holds a foreground service for the whole download/extract so a cached-app freezer cannot stall it. */
+    private val foregroundLease: (() -> AutoCloseable?)? = null,
 ) : AutoCloseable {
     private val lock = Any()
     private val mutable = MutableStateFlow(LinuxInstallState(unavailableReason = unavailableReason))
@@ -157,11 +159,16 @@ class LinuxInstallCoordinator internal constructor(
         eligible = { it.prepared === prepared && it.receipt == null && !it.unknown && !it.recoveryBlocked },
         cancellable = true,
     ) {
-        val activeToken = synchronized(lock) { checkNotNull(token) }
-        val epoch = synchronized(lock) { operationEpoch }
-        val receipt = installer.install(prepared, activeToken)
-        // Never register from a visible marker without a durable publication receipt.
-        installedState(prepared, receipt, epoch)
+        val lease = try { foregroundLease?.invoke() } catch (_: Exception) { null }
+        try {
+            val activeToken = synchronized(lock) { checkNotNull(token) }
+            val epoch = synchronized(lock) { operationEpoch }
+            val receipt = installer.install(prepared, activeToken)
+            // Never register from a visible marker without a durable publication receipt.
+            installedState(prepared, receipt, epoch)
+        } finally {
+            try { lease?.close() } catch (_: Exception) { }
+        }
     }
 
     /** A click explicitly retries publication durability, not another download or registration. */
@@ -319,7 +326,8 @@ class LinuxInstallCoordinator internal constructor(
                 RootlessInstallTransactions(installer),
                 PackagedProotHelperProvider(application)::resolve,
                 File(application.filesDir.canonicalFile, if (mode == LinuxExecutionMode.CHROOT) "linux-chroot-installations" else "linux-installations"), catalog,
-                unavailableReason = LinuxRuntimePlatform.unavailableReason(mode), executionMode = mode)
+                unavailableReason = LinuxRuntimePlatform.unavailableReason(mode), executionMode = mode,
+                foregroundLease = { app.daiyu.android.execution.UserExecutionService.acquire(application) { } })
         }
     }
 }
