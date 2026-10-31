@@ -1,0 +1,49 @@
+name: Fork Debug APK
+# Fork-only helper: builds an installable debug APK without the upstream release-signing secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      check_id:
+        description: 运行标识
+        type: string
+        default: manual
+permissions:
+  contents: read
+concurrency:
+  group: fork-debug-${{ github.ref }}-${{ inputs.check_id }}
+  cancel-in-progress: false
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            21
+            27
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '16111833'
+          packages: 'platform-tools platforms/android-37.2 build-tools/37.0.0'
+          log-accepted-android-sdk-licenses: false
+      - name: 校验独立边界
+        run: |
+          python3 scripts/verify_boundaries.py
+          bash -n scripts/smoke_boot.sh
+      - name: 准备固定离线语音 JNI（不打包）
+        run: ./gradlew --no-daemon :app:prepareOfflineSpeechRuntime
+      - name: 单测与 Lint
+        run: ./gradlew --no-daemon :core-domain:test :app:testDebugUnitTest :app:lintDebug
+      - name: 构建 Debug APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daiyu-fork-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
