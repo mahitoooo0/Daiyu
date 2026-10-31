@@ -34,6 +34,8 @@ data class IconSyncResult(
 data class IconSyncFailure(val stage: String, val component: String?, val detail: String)
 
 class LauncherIconSwitcher(
+    /** Component-name root for launcher aliases: the manifest namespace, which may differ from a
+     *  suffixed applicationId. Never build alias names from a coexistence-suffixed package id. */
     private val packageName: String,
     private val components: LauncherComponentPort,
     private val notifications: IconNotificationPort,

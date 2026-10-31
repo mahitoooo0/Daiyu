@@ -26,6 +26,7 @@ class VirtualDisplayAnchorActivity : Activity() {
     companion object {
         const val LAUNCH_SCHEME = "daiyu-vd-anchor"
         // Manifest contract, not the app's ordinary task affinity; see docs/integration/vd-owner-stage1.md.
-        const val TASK_AFFINITY = "app.daiyu.android.vd.anchor"
+        // Derived so a coexistence build with a suffixed applicationId keeps the manifest and code in step.
+        val TASK_AFFINITY: String get() = app.daiyu.android.BuildConfig.APPLICATION_ID + ".vd.anchor"
     }
 }

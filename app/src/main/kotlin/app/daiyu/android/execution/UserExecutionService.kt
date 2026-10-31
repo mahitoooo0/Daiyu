@@ -75,7 +75,7 @@ internal class UserExecutionService : Service() {
 
     private fun notification(): Notification {
         val open = PendingIntent.getActivity(this, 0,
-            Intent().setClassName(this, "$packageName.MainActivity"),
+            Intent(this, app.daiyu.android.MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1,
             Intent(this, UserExecutionService::class.java).setAction(ACTION_STOP),

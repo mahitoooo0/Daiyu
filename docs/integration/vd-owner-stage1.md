@@ -28,13 +28,14 @@ app.daiyu.android.vd.runtime.VirtualDisplayOwnerMain
     android:exported="true"
     android:excludeFromRecents="true"
     android:allowTaskReparenting="false"
-    android:taskAffinity="app.daiyu.android.vd.anchor"
+    android:taskAffinity="${applicationId}.vd.anchor"
     android:launchMode="standard"
     android:theme="@android:style/Theme.Material.NoActionBar" />
 ```
 
 - 组件与 OwnerHandoff 的 `app.daiyu.android/app.daiyu.android.vd.VirtualDisplayAnchorActivity` 必须一致。
 - exported 允许独立 UID 0 owner 的显式 `am start`；不添加 launcher、BROWSABLE 或任何隐式 intent-filter。
+- affinity 以 `${applicationId}` 为前缀，默认构建下等于 `app.daiyu.android.vd.anchor`；带共存后缀的构建随之改变，代码侧用 `BuildConfig.APPLICATION_ID` 派生（见 docs/coexistence-builds.md），不要写死包名。
 - affinity 独立于宿主普通任务；配合已有 `NEW_TASK | MULTIPLE_TASK` 创建临时独立 cover。不能改为宿主默认 affinity，不能使用 singleTask/singleInstance，不能设置 noHistory（后台移交时仍需验证并显式移除该 anchor）。
 - cover 使用不透明深色主题；不得替换成透明 Activity。`excludeFromRecents` 使其不作为用户任务暴露；不要用 permission/launchMode 变化绕过实际 owner 组件校验。
 - 原有 `am start` 的 `-d` 仍是实际 Intent data，**不是 action、category、extra 或仅用于日志的标记**：anchor 为 `daiyu-vd-anchor://handoff/<随机 UUID>`，Activity 检查同一 scheme 且拒绝主显示；普通 owner launch 为 `daiyu-vd://session/<随机 UUID>`，task baseIntent 必须回读出完全相同的 marker 与目标包，算法未改。

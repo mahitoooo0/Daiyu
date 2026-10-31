@@ -52,6 +52,24 @@ check(!daiyuPhysicalPerformance || daiyuSyntheticApplication) {
     "物理性能构建必须启用 daiyuSyntheticApplication=true"
 }
 
+// Coexistence switch: a suffix makes this package installable next to the upstream 代鱼 build.
+// Default (unset) keeps applicationId, label and manifest authorities byte-identical to before.
+val daiyuApplicationIdSuffix = providers.gradleProperty("daiyuApplicationIdSuffix").orNull?.takeIf(String::isNotBlank)
+val daiyuApplicationLabel = providers.gradleProperty("daiyuApplicationLabel").orNull?.takeIf(String::isNotBlank)
+check(daiyuApplicationIdSuffix == null || daiyuApplicationIdSuffix.matches(Regex("\\.[a-z0-9_]{1,32}"))) {
+    "daiyuApplicationIdSuffix 必须以 . 开头，且只含小写字母、数字或下划线（最长 33 字符）"
+}
+check(daiyuApplicationLabel == null ||
+    (daiyuApplicationLabel.length <= 40 && !daiyuApplicationLabel.any { it == '"' || it == '<' || it == '>' || it == '&' || it == '$' })) {
+    "daiyuApplicationLabel 不得超过 40 字符，且不得包含引号、尖括号、& 与美元符号"
+}
+check(daiyuApplicationLabel == null || daiyuApplicationIdSuffix != null || daiyuSyntheticApplication) {
+    "自定义 daiyuApplicationLabel 需要同时提供 daiyuApplicationIdSuffix 或启用 daiyuSyntheticApplication，避免与原版同名冲突"
+}
+val applicationIdSuffixValue = buildList {
+    if (daiyuSyntheticApplication) add(".synthetic")
+    daiyuApplicationIdSuffix?.let { add(it) }
+}.joinToString("")
 android {
     buildFeatures { compose = true; aidl = true; buildConfig = true }
     useLibrary("android.test.runner")
@@ -69,6 +87,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 1
         versionName = "0.1.0"
+        // Read by code that must name manifest components while the applicationId may be suffixed.
+        buildConfigField("String", "MANIFEST_PACKAGE", "\"app.daiyu.android\"")
+        // @string/app_name keeps per-locale labels; a coexistence build can override it with a literal.
+        manifestPlaceholders["appLabel"] = daiyuApplicationLabel ?: "@string/app_name"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
@@ -132,14 +154,14 @@ android {
     }
     buildTypes {
         debug {
-            if (daiyuSyntheticApplication) applicationIdSuffix = ".synthetic"
+            if (applicationIdSuffixValue.isNotEmpty()) applicationIdSuffix = applicationIdSuffixValue
             if (fixedSigning) signingConfig = signingConfigs.getByName("release")
         }
         release {
             isMinifyEnabled = false
             isDebuggable = false
             isProfileable = daiyuPhysicalPerformance
-            if (daiyuSyntheticApplication) applicationIdSuffix = ".synthetic"
+            if (applicationIdSuffixValue.isNotEmpty()) applicationIdSuffix = applicationIdSuffixValue
             if (fixedSigning) signingConfig = signingConfigs.getByName("release")
         }
     }

@@ -24,7 +24,8 @@ class IconAppearanceCoordinator internal constructor(
 
     private val context = context.applicationContext
     val store = IconAppearanceStore(this.context)
-    private val switcher = LauncherIconSwitcher(this.context.packageName,
+    // Alias component names are manifest-namespace based; the applicationId may carry a coexistence suffix.
+    private val switcher = LauncherIconSwitcher(app.daiyu.android.BuildConfig.MANIFEST_PACKAGE,
         components, notifications, store::recordCurrent)
 
     /** Explicit user choice; desired preference survives a PM failure, receipt is authoritative. */

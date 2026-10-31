@@ -12,9 +12,11 @@ import app.daiyu.android.domain.appearance.LauncherComponentPort
 class PackageManagerIconAdapter(context: Context) : LauncherComponentPort {
     private val contextForResources = context.applicationContext
     private val packageName = context.packageName
+    // activity-alias names are declared with the manifest namespace, which can differ from a suffixed applicationId.
+    private val aliasRoot = app.daiyu.android.BuildConfig.MANIFEST_PACKAGE
     private val pm = context.packageManager
     private fun component(name: String): ComponentName {
-        require(name.startsWith("$packageName.icon.L_")) { "Not an owned icon alias" }
+        require(name.startsWith("$aliasRoot.icon.L_")) { "Not an owned icon alias" }
         return ComponentName(packageName, name)
     }
 
@@ -28,7 +30,7 @@ class PackageManagerIconAdapter(context: Context) : LauncherComponentPort {
         val launchers = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName), flags)
         check(launchers.any { it.activityInfo.name == componentName }) { "Alias has no MAIN/LAUNCHER filter: $componentName" }
         val entry = app.daiyu.android.domain.appearance.Task17IconCatalog.entries.firstOrNull {
-            it.componentName(packageName) == componentName
+            it.componentName(aliasRoot) == componentName
         } ?: error("Alias is outside the icon catalog")
         val iconId = Task17IconResources.drawableId(contextForResources, entry)
         check(iconId != 0 && info.icon == iconId) { "Alias icon is missing or does not match catalog: $componentName" }
