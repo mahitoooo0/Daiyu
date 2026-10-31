@@ -7,6 +7,14 @@ on:
         description: 运行标识
         type: string
         default: manual
+      app_suffix:
+        description: 共存包名后缀（如 .mine；留空=与上游同包名）
+        type: string
+        default: ''
+      app_label:
+        description: 共存版启动器名称（如 代鱼·开发版；留空=@string/app_name）
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -44,9 +52,18 @@ jobs:
       - name: Lint
         run: ./gradlew --no-daemon :app:lintDebug
       - name: 构建 Debug APK
-        run: ./gradlew --no-daemon :app:assembleDebug
+        shell: bash
+        env:
+          APP_SUFFIX: ${{ inputs.app_suffix }}
+          APP_LABEL: ${{ inputs.app_label }}
+        run: |
+          extra=()
+          if [ -n "$APP_SUFFIX" ]; then extra+=("-PdaiyuApplicationIdSuffix=$APP_SUFFIX"); fi
+          if [ -n "$APP_LABEL" ]; then extra+=("-PdaiyuApplicationLabel=$APP_LABEL"); fi
+          echo "gradle extra: ${extra[*]:-<default build>}"
+          ./gradlew --no-daemon :app:assembleDebug "${extra[@]}"
       - uses: actions/upload-artifact@v4
         with:
-          name: daiyu-fork-debug
+          name: daiyu-fork-debug${{ inputs.app_suffix }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
